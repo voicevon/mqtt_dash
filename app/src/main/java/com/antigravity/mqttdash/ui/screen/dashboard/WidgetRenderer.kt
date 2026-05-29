@@ -1,14 +1,17 @@
 package com.antigravity.mqttdash.ui.screen.dashboard
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.antigravity.mqttdash.data.db.entity.WidgetEntity
 import com.antigravity.mqttdash.data.db.entity.WidgetType
@@ -36,7 +39,15 @@ fun WidgetRenderer(
     val config = runCatching { JSONObject(widget.configJson) }.getOrDefault(JSONObject())
     val subFlow = widget.subTopic?.let { topicFlow(it, widget.qos) }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onLongPress = { onEdit() }
+                )
+            }
+    ) {
         // ── Widget content ──────────────────────────────────────────────
         when (widget.type) {
             WidgetType.TEXT -> TextWidget(
@@ -82,6 +93,18 @@ fun WidgetRenderer(
 
         // ── Edit mode overlay ───────────────────────────────────────────
         if (isEditMode) {
+            // Edit button (top-left)
+            SmallFloatingActionButton(
+                onClick = onEdit,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(4.dp)
+                    .size(28.dp)
+            ) {
+                Icon(Icons.Filled.Edit, contentDescription = "Edit", modifier = Modifier.size(14.dp))
+            }
+
             // Delete button (top-right)
             SmallFloatingActionButton(
                 onClick = onDelete,

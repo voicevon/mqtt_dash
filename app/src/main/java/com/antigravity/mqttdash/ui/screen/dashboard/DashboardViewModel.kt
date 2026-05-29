@@ -97,4 +97,22 @@ class DashboardViewModel @Inject constructor(
             )
         }
     }
+
+    fun renameDashboard(dashboard: DashboardEntity, newName: String) {
+        viewModelScope.launch {
+            dashboardRepository.saveDashboard(dashboard.copy(name = newName))
+        }
+    }
+
+    fun deleteDashboard(dashboard: DashboardEntity) {
+        viewModelScope.launch {
+            if (_currentDashboardId.value == dashboard.id) {
+                val other = dashboards.value.firstOrNull { it.id != dashboard.id }
+                if (other != null) {
+                    _currentDashboardId.value = other.id
+                }
+            }
+            dashboardRepository.deleteDashboard(dashboard)
+        }
+    }
 }

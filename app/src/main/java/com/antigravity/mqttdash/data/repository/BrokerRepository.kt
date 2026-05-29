@@ -23,4 +23,16 @@ class BrokerRepository @Inject constructor(
     /** Call after a successful connection to bubble this broker to the top of the history list. */
     suspend fun markConnected(id: Long) =
         brokerDao.updateLastConnected(id, System.currentTimeMillis())
+
+    suspend fun findMatchingBroker(
+        host: String,
+        port: Int,
+        username: String?,
+        password: String?,
+        useTls: Boolean,
+        clientId: String
+    ): BrokerEntity? {
+        return brokerDao.getBrokersByAddress(host, port, useTls, clientId)
+            .firstOrNull { it.username == username && it.password == password }
+    }
 }

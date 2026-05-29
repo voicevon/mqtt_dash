@@ -13,11 +13,13 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
 data class ConnectUiState(
+    val name: String = "",
     val host: String = "",
     val port: String = "1883",
     val username: String = "",
@@ -43,8 +45,14 @@ class ConnectViewModel @Inject constructor(
     val uiState: StateFlow<ConnectUiState> = _uiState.asStateFlow()
 
     val recentBrokers = brokerRepository.allBrokers
+        .map { list ->
+            list.distinctBy {
+                "${it.host}:${it.port}:${it.username ?: ""}:${it.password ?: ""}:${it.useTls}:${it.clientId}"
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    fun onNameChange(value: String) = _uiState.value.let { _uiState.value = it.copy(name = value) }
     fun onHostChange(value: String) = _uiState.value.let { _uiState.value = it.copy(host = value) }
     fun onPortChange(value: String) = _uiState.value.let { _uiState.value = it.copy(port = value) }
     fun onUsernameChange(v: String) = _uiState.value.let { _uiState.value = it.copy(username = v) }
@@ -56,6 +64,7 @@ class ConnectViewModel @Inject constructor(
     /** Load a saved broker into the form fields */
     fun loadBroker(broker: BrokerEntity) {
         _uiState.value = _uiState.value.copy(
+            name = if (broker.name != broker.host) broker.name else "",
             host = broker.host,
             port = broker.port.toString(),
             username = broker.username ?: "",
@@ -93,9 +102,8 @@ class ConnectViewModel @Inject constructor(
             mqttManager.connectionState.collect { connState ->
                 when (connState) {
                     is ConnectionState.Connected -> {
-                        // Persist broker
-                        val broker = BrokerEntity(
-                            name = state.host.trim(),
+                        // Check if broker already exists to de-duplicate
+                        val existing = brokerRepository.findMatchingBroker(
                             host = state.host.trim(),
                             port = port,
                             username = state.username.ifBlank { null },
@@ -103,7 +111,24 @@ class ConnectViewModel @Inject constructor(
                             useTls = state.useTls,
                             clientId = state.clientId
                         )
-                        val brokerId = brokerRepository.saveBroker(broker)
+                        val brokerId = if (existing != null) {
+                            val updated = existing.copy(
+                                name = state.name.ifBlank { state.host.trim() }
+                            )
+                            brokerRepository.saveBroker(updated)
+                            existing.id
+                        } else {
+                            val broker = BrokerEntity(
+                                name = state.name.ifBlank { state.host.trim() },
+                                host = state.host.trim(),
+                                port = port,
+                                username = state.username.ifBlank { null },
+                                password = state.password.ifBlank { null },
+                                useTls = state.useTls,
+                                clientId = state.clientId
+                            )
+                            brokerRepository.saveBroker(broker)
+                        }
                         brokerRepository.markConnected(brokerId)
 
                         // Ensure at least one dashboard exists
@@ -135,5 +160,18 @@ class ConnectViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
+    }
+
+    fun deleteBroker(broker: BrokerEntity) {
+        viewModelScope.launch {
+            brokerRepository.deleteBroker(broker)
+        }
+    }
+
+    fun updateBrokerName(broker: BrokerEntity, newName: String) {
+        viewModelScope.launch {
+            val updated = broker.copy(name = newName.ifBlank { broker.host })
+            brokerRepository.saveBroker(updated)
+        }
     }
 }

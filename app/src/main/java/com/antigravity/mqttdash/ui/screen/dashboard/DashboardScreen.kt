@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.antigravity.mqttdash.data.db.entity.DashboardEntity
 import com.antigravity.mqttdash.data.db.entity.WidgetEntity
 import com.antigravity.mqttdash.data.db.entity.WidgetType
 import com.antigravity.mqttdash.mqtt.ConnectionState
@@ -47,6 +48,8 @@ fun DashboardScreen(
     var showAddSheet by remember { mutableStateOf(false) }
     var editingWidget by remember { mutableStateOf<WidgetEntity?>(null) }
     var showNewDashboardDialog by remember { mutableStateOf(false) }
+    var dashboardToRename by remember { mutableStateOf<DashboardEntity?>(null) }
+    var dashboardToDelete by remember { mutableStateOf<DashboardEntity?>(null) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -72,6 +75,8 @@ fun DashboardScreen(
                     scope.launch { drawerState.close() }
                 },
                 onAddDashboard = { showNewDashboardDialog = true },
+                onRenameDashboard = { dashboardToRename = it },
+                onDeleteDashboard = { dashboardToDelete = it },
                 onDisconnect = {
                     viewModel.disconnect()
                     onDisconnect()
@@ -186,6 +191,59 @@ fun DashboardScreen(
             onCreate = { name ->
                 viewModel.addDashboard(name)
                 showNewDashboardDialog = false
+            }
+        )
+    }
+
+    // Dialog: rename dashboard
+    dashboardToRename?.let { dashboard ->
+        var name by remember { mutableStateOf(dashboard.name) }
+        AlertDialog(
+            onDismissRequest = { dashboardToRename = null },
+            title = { Text("Rename Dashboard") },
+            text = {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Dashboard name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (name.isNotBlank()) {
+                            viewModel.renameDashboard(dashboard, name)
+                            dashboardToRename = null
+                        }
+                    },
+                    enabled = name.isNotBlank()
+                ) { Text("Save") }
+            },
+            dismissButton = {
+                TextButton(onClick = { dashboardToRename = null }) { Text("Cancel") }
+            }
+        )
+    }
+
+    // Dialog: delete dashboard
+    dashboardToDelete?.let { dashboard ->
+        AlertDialog(
+            onDismissRequest = { dashboardToDelete = null },
+            title = { Text("Delete Dashboard") },
+            text = { Text("Are you sure you want to delete dashboard '${dashboard.name}'? This will delete all widgets inside it.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteDashboard(dashboard)
+                        dashboardToDelete = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { dashboardToDelete = null }) { Text("Cancel") }
             }
         )
     }

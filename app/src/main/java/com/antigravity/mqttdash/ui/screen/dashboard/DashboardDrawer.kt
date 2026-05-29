@@ -21,6 +21,8 @@ fun DashboardDrawer(
     currentDashboardId: Long,
     onSelectDashboard: (Long) -> Unit,
     onAddDashboard: () -> Unit,
+    onRenameDashboard: (DashboardEntity) -> Unit,
+    onDeleteDashboard: (DashboardEntity) -> Unit,
     onDisconnect: () -> Unit
 ) {
     ModalDrawerSheet(
@@ -45,6 +47,37 @@ fun DashboardDrawer(
                     onClick = { onSelectDashboard(dashboard.id) },
                     icon = {
                         Icon(Icons.Filled.Dashboard, contentDescription = null)
+                    },
+                    badge = {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(
+                                onClick = { onRenameDashboard(dashboard) },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    Icons.Filled.Edit,
+                                    contentDescription = "Rename Dashboard",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                            if (dashboards.size > 1) {
+                                IconButton(
+                                    onClick = { onDeleteDashboard(dashboard) },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Delete,
+                                        contentDescription = "Delete Dashboard",
+                                        tint = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        }
                     },
                     modifier = Modifier.padding(horizontal = 12.dp)
                 )

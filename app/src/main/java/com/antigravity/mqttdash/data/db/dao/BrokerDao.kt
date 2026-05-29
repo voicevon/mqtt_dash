@@ -24,4 +24,12 @@ interface BrokerDao {
 
     @Query("UPDATE brokers SET lastConnectedAt = :timestamp WHERE id = :id")
     suspend fun updateLastConnected(id: Long, timestamp: Long)
+
+    @Query("SELECT * FROM brokers WHERE host = :host AND port = :port AND useTls = :useTls AND clientId = :clientId")
+    suspend fun getBrokersByAddress(
+        host: String,
+        port: Int,
+        useTls: Boolean,
+        clientId: String
+    ): List<BrokerEntity>
 }

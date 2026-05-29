@@ -15,6 +15,8 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.SignalWifi4Bar
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
@@ -41,6 +43,8 @@ fun ConnectScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val recentBrokers by viewModel.recentBrokers.collectAsState()
+    var brokerToRename by remember { mutableStateOf<BrokerEntity?>(null) }
+    var brokerToDelete by remember { mutableStateOf<BrokerEntity?>(null) }
     val focusManager = LocalFocusManager.current
 
     // Error snackbar
@@ -125,6 +129,23 @@ fun ConnectScreen(
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Spacer(Modifier.height(12.dp))
+
+                            OutlinedTextField(
+                                value = uiState.name,
+                                onValueChange = viewModel::onNameChange,
+                                label = { Text("Connection name / Alias (optional)") },
+                                placeholder = { Text("My Home Broker") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Text,
+                                    imeAction = ImeAction.Next
+                                ),
+                                keyboardActions = KeyboardActions(
+                                    onNext = { focusManager.moveFocus(FocusDirection.Next) }
+                                )
+                            )
+                            Spacer(Modifier.height(8.dp))
 
                             // Host : Port row
                             Row(
@@ -276,17 +297,74 @@ fun ConnectScreen(
                     items(recentBrokers) { broker ->
                         BrokerHistoryItem(
                             broker = broker,
-                            onClick = { viewModel.loadBroker(broker) }
+                            onClick = { viewModel.loadBroker(broker) },
+                            onRename = { brokerToRename = broker },
+                            onDelete = { brokerToDelete = broker }
                         )
                     }
                 }
+            }
+
+            // Dialog: rename connection
+            brokerToRename?.let { broker ->
+                var name by remember { mutableStateOf(broker.name) }
+                AlertDialog(
+                    onDismissRequest = { brokerToRename = null },
+                    title = { Text("Rename Connection") },
+                    text = {
+                        OutlinedTextField(
+                            value = name,
+                            onValueChange = { name = it },
+                            label = { Text("Connection name / Alias") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                viewModel.updateBrokerName(broker, name)
+                                brokerToRename = null
+                            }
+                        ) { Text("Save") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { brokerToRename = null }) { Text("Cancel") }
+                    }
+                )
+            }
+
+            // Dialog: delete connection
+            brokerToDelete?.let { broker ->
+                AlertDialog(
+                    onDismissRequest = { brokerToDelete = null },
+                    title = { Text("Delete Connection") },
+                    text = { Text("Are you sure you want to delete the saved connection to '${broker.name}'?") },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                viewModel.deleteBroker(broker)
+                                brokerToDelete = null
+                            },
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                        ) { Text("Delete") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { brokerToDelete = null }) { Text("Cancel") }
+                    }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun BrokerHistoryItem(broker: BrokerEntity, onClick: () -> Unit) {
+private fun BrokerHistoryItem(
+    broker: BrokerEntity,
+    onClick: () -> Unit,
+    onRename: () -> Unit,
+    onDelete: () -> Unit
+) {
     Card(
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -299,19 +377,35 @@ private fun BrokerHistoryItem(broker: BrokerEntity, onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(broker.host, style = MaterialTheme.typography.bodyMedium)
+                Text(broker.name, style = MaterialTheme.typography.bodyMedium)
                 Text(
                     "${broker.host}:${broker.port}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Icon(
-                Icons.Outlined.ChevronRight,
-                contentDescription = "Load",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp)
-            )
+            IconButton(
+                onClick = onRename,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    Icons.Filled.Edit,
+                    contentDescription = "Rename Connection",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = "Delete Connection",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 }
