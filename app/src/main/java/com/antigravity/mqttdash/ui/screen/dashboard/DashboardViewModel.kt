@@ -86,21 +86,24 @@ class DashboardViewModel @Inject constructor(
         mqttManager.disconnect()
     }
 
-    fun addDashboard(name: String) {
+    fun addDashboard(name: String, widgetSize: String = "MEDIUM") {
         viewModelScope.launch {
             dashboardRepository.saveDashboard(
                 DashboardEntity(
                     brokerId = brokerId,
                     name = name,
+                    widgetSize = widgetSize,
                     position = dashboards.value.size
                 )
             )
         }
     }
 
-    fun renameDashboard(dashboard: DashboardEntity, newName: String) {
+    fun renameDashboard(dashboard: DashboardEntity, newName: String, widgetSize: String) {
         viewModelScope.launch {
-            dashboardRepository.saveDashboard(dashboard.copy(name = newName))
+            dashboardRepository.saveDashboard(
+                dashboard.copy(name = newName, widgetSize = widgetSize)
+            )
         }
     }
 

@@ -101,12 +101,12 @@ fun ConnectScreen(
                         }
                         Spacer(Modifier.height(16.dp))
                         Text(
-                            text = "MQTT Dash",
+                            text = "MQTT Dash 仪表盘",
                             style = MaterialTheme.typography.headlineLarge,
                             color = MaterialTheme.colorScheme.onBackground
                         )
                         Text(
-                            text = "Connect to your IoT broker",
+                            text = "连接到您的 MQTT 物联网服务器",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -124,7 +124,7 @@ fun ConnectScreen(
                     ) {
                         Column(Modifier.padding(20.dp)) {
                             Text(
-                                "Quick Connect",
+                                "快速连接",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -133,8 +133,8 @@ fun ConnectScreen(
                             OutlinedTextField(
                                 value = uiState.name,
                                 onValueChange = viewModel::onNameChange,
-                                label = { Text("Connection name / Alias (optional)") },
-                                placeholder = { Text("My Home Broker") },
+                                label = { Text("连接别名 / 名称 (可选)") },
+                                placeholder = { Text("例如: 我的智能家居服务器") },
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth(),
                                 keyboardOptions = KeyboardOptions(
@@ -154,8 +154,8 @@ fun ConnectScreen(
                                 OutlinedTextField(
                                     value = uiState.host,
                                     onValueChange = viewModel::onHostChange,
-                                    label = { Text("Broker address") },
-                                    placeholder = { Text("broker.example.com") },
+                                    label = { Text("服务器地址 (Host)") },
+                                    placeholder = { Text("例如: broker.emqx.io") },
                                     singleLine = true,
                                     modifier = Modifier.weight(1f),
                                     keyboardOptions = KeyboardOptions(
@@ -169,7 +169,7 @@ fun ConnectScreen(
                                 OutlinedTextField(
                                     value = uiState.port,
                                     onValueChange = viewModel::onPortChange,
-                                    label = { Text("Port") },
+                                    label = { Text("端口") },
                                     singleLine = true,
                                     modifier = Modifier.width(90.dp),
                                     keyboardOptions = KeyboardOptions(
@@ -196,7 +196,7 @@ fun ConnectScreen(
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(Modifier.width(4.dp))
-                                Text("Advanced options")
+                                Text("高级连接选项")
                             }
 
                             // Animated advanced section
@@ -209,7 +209,7 @@ fun ConnectScreen(
                                     OutlinedTextField(
                                         value = uiState.username,
                                         onValueChange = viewModel::onUsernameChange,
-                                        label = { Text("Username (optional)") },
+                                        label = { Text("用户名 (可选)") },
                                         singleLine = true,
                                         modifier = Modifier.fillMaxWidth(),
                                         leadingIcon = { Icon(Icons.Filled.Lock, null, modifier = Modifier.size(18.dp)) }
@@ -217,7 +217,7 @@ fun ConnectScreen(
                                     OutlinedTextField(
                                         value = uiState.password,
                                         onValueChange = viewModel::onPasswordChange,
-                                        label = { Text("Password (optional)") },
+                                        label = { Text("密码 (可选)") },
                                         singleLine = true,
                                         visualTransformation = PasswordVisualTransformation(),
                                         modifier = Modifier.fillMaxWidth()
@@ -225,7 +225,7 @@ fun ConnectScreen(
                                     OutlinedTextField(
                                         value = uiState.clientId,
                                         onValueChange = viewModel::onClientIdChange,
-                                        label = { Text("Client ID") },
+                                        label = { Text("客户端 ID (Client ID)") },
                                         singleLine = true,
                                         modifier = Modifier.fillMaxWidth()
                                     )
@@ -234,7 +234,7 @@ fun ConnectScreen(
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Text(
-                                            "Use TLS / SSL",
+                                            "启用安全连接 (TLS / SSL)",
                                             style = MaterialTheme.typography.bodyMedium,
                                             modifier = Modifier.weight(1f)
                                         )
@@ -264,11 +264,11 @@ fun ConnectScreen(
                                         strokeWidth = 2.dp
                                     )
                                     Spacer(Modifier.width(8.dp))
-                                    Text("Connecting…")
+                                    Text("正在连接...")
                                 } else {
                                     Icon(Icons.Filled.Wifi, null, modifier = Modifier.size(18.dp))
                                     Spacer(Modifier.width(8.dp))
-                                    Text("Connect", style = MaterialTheme.typography.titleMedium)
+                                    Text("连接", style = MaterialTheme.typography.titleMedium)
                                 }
                             }
                         }
@@ -287,7 +287,7 @@ fun ConnectScreen(
                             )
                             Spacer(Modifier.width(6.dp))
                             Text(
-                                "Recent connections",
+                                "最近的连接",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -310,12 +310,12 @@ fun ConnectScreen(
                 var name by remember { mutableStateOf(broker.name) }
                 AlertDialog(
                     onDismissRequest = { brokerToRename = null },
-                    title = { Text("Rename Connection") },
+                    title = { Text("重命名连接配置") },
                     text = {
                         OutlinedTextField(
                             value = name,
                             onValueChange = { name = it },
-                            label = { Text("Connection name / Alias") },
+                            label = { Text("连接别名 / 名称") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -326,10 +326,10 @@ fun ConnectScreen(
                                 viewModel.updateBrokerName(broker, name)
                                 brokerToRename = null
                             }
-                        ) { Text("Save") }
+                        ) { Text("保存") }
                     },
                     dismissButton = {
-                        TextButton(onClick = { brokerToRename = null }) { Text("Cancel") }
+                        TextButton(onClick = { brokerToRename = null }) { Text("取消") }
                     }
                 )
             }
@@ -338,8 +338,8 @@ fun ConnectScreen(
             brokerToDelete?.let { broker ->
                 AlertDialog(
                     onDismissRequest = { brokerToDelete = null },
-                    title = { Text("Delete Connection") },
-                    text = { Text("Are you sure you want to delete the saved connection to '${broker.name}'?") },
+                    title = { Text("删除保存的连接") },
+                    text = { Text("您确定要删除与 '${broker.name}' 的保存连接配置吗？") },
                     confirmButton = {
                         TextButton(
                             onClick = {
@@ -347,10 +347,10 @@ fun ConnectScreen(
                                 brokerToDelete = null
                             },
                             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                        ) { Text("Delete") }
+                        ) { Text("删除") }
                     },
                     dismissButton = {
-                        TextButton(onClick = { brokerToDelete = null }) { Text("Cancel") }
+                        TextButton(onClick = { brokerToDelete = null }) { Text("取消") }
                     }
                 )
             }

@@ -7,6 +7,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.flow.SharedFlow
 import kotlin.math.roundToInt
 
@@ -24,10 +26,28 @@ fun SliderWidget(
     step: Float,
     topicFlow: SharedFlow<String>?,
     onPublish: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    fontSize: String = "MEDIUM",
+    cardColorHex: String = ""
 ) {
     var sliderValue by remember { mutableFloatStateOf(min) }
     var isDragging by remember { mutableStateOf(false) }
+
+    val titleSize = when (fontSize) {
+        "SMALL" -> 10.sp
+        "LARGE" -> 14.sp
+        else -> 12.sp
+    }
+    val valueSize = when (fontSize) {
+        "SMALL" -> 14.sp
+        "LARGE" -> 22.sp
+        else -> 18.sp
+    }
+    val containerColor = if (cardColorHex.isNotBlank()) {
+        try { Color(android.graphics.Color.parseColor(cardColorHex)) } catch (e: Exception) { MaterialTheme.colorScheme.surface }
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
 
     // Receive state from broker (only update when not dragging to avoid jitter)
     LaunchedEffect(topicFlow) {
@@ -42,7 +62,10 @@ fun SliderWidget(
 
     val steps = if (step > 0f) ((max - min) / step).roundToInt() - 1 else 0
 
-    WidgetCard(modifier = modifier) {
+    WidgetCard(
+        containerColor = containerColor,
+        modifier = modifier
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -56,7 +79,7 @@ fun SliderWidget(
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = titleSize),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -64,7 +87,7 @@ fun SliderWidget(
                 )
                 Text(
                     text = "${formatValue(sliderValue, step)} $unit".trim(),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium.copy(fontSize = valueSize),
                     color = MaterialTheme.colorScheme.primary
                 )
             }

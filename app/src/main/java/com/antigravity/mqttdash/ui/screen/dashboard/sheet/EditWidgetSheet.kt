@@ -13,8 +13,7 @@ import com.antigravity.mqttdash.data.db.entity.WidgetType
 import org.json.JSONObject
 
 /**
- * Edit sheet shown when user taps a widget in edit mode.
- * Renders type-specific configuration fields.
+ * 编辑控件属性 Bottom Sheet
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,6 +49,10 @@ fun EditWidgetSheet(
     // IMAGE fields
     var maxFps by remember { mutableStateOf(config.optInt("maxFps", 1).toString()) }
 
+    // Size & Color & Font fields
+    var fontSize by remember { mutableStateOf(config.optString("fontSize", "MEDIUM")) }
+    var cardColor by remember { mutableStateOf(config.optString("cardColor", "")) }
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
@@ -63,15 +66,15 @@ fun EditWidgetSheet(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                "Configure Widget",
+                "配置控件",
                 style = MaterialTheme.typography.titleLarge
             )
 
-            // ── Common fields ─────────────────────────────
+            // ── 通用字段 ─────────────────────────────
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
-                label = { Text("Title") },
+                label = { Text("标题 / 别名") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -79,8 +82,8 @@ fun EditWidgetSheet(
             OutlinedTextField(
                 value = subTopic,
                 onValueChange = { subTopic = it },
-                label = { Text("Subscribe topic") },
-                placeholder = { Text("home/sensor/temp") },
+                label = { Text("订阅主题 (State Topic)") },
+                placeholder = { Text("例如: home/sensor/temp") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -89,8 +92,8 @@ fun EditWidgetSheet(
                 OutlinedTextField(
                     value = pubTopic,
                     onValueChange = { pubTopic = it },
-                    label = { Text("Publish topic") },
-                    placeholder = { Text("home/device/set") },
+                    label = { Text("发布主题 (Command Topic)") },
+                    placeholder = { Text("例如: home/device/set") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -104,22 +107,30 @@ fun EditWidgetSheet(
                 onRowSpanChange = { rowSpan = it }
             )
 
+            // Font & Color picker
+            FontAndColorPicker(
+                fontSize = fontSize,
+                onFontSizeChange = { fontSize = it },
+                cardColor = cardColor,
+                onCardColorChange = { cardColor = it }
+            )
+
             HorizontalDivider()
 
-            // ── Type-specific fields ──────────────────────
+            // ── 类型特有字段 ──────────────────────
             when (widget.type) {
                 WidgetType.TEXT -> {
                     OutlinedTextField(
                         value = unit,
                         onValueChange = { unit = it },
-                        label = { Text("Unit suffix (e.g. °C)") },
+                        label = { Text("单位后缀 (例如：°C)") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = jsonPath,
                         onValueChange = { jsonPath = it },
-                        label = { Text("JSONPath (optional, e.g. $.temp)") },
+                        label = { Text("JSONPath (可选，例如：$.temp)") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -128,14 +139,14 @@ fun EditWidgetSheet(
                     OutlinedTextField(
                         value = onPayload,
                         onValueChange = { onPayload = it },
-                        label = { Text("ON payload") },
+                        label = { Text("开启负载 (ON Payload)") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = offPayload,
                         onValueChange = { offPayload = it },
-                        label = { Text("OFF payload") },
+                        label = { Text("关闭负载 (OFF Payload)") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -145,21 +156,21 @@ fun EditWidgetSheet(
                         OutlinedTextField(
                             value = sliderMin,
                             onValueChange = { sliderMin = it },
-                            label = { Text("Min") },
+                            label = { Text("最小值") },
                             singleLine = true,
                             modifier = Modifier.weight(1f)
                         )
                         OutlinedTextField(
                             value = sliderMax,
                             onValueChange = { sliderMax = it },
-                            label = { Text("Max") },
+                            label = { Text("最大值") },
                             singleLine = true,
                             modifier = Modifier.weight(1f)
                         )
                         OutlinedTextField(
                             value = sliderStep,
                             onValueChange = { sliderStep = it },
-                            label = { Text("Step") },
+                            label = { Text("步长") },
                             singleLine = true,
                             modifier = Modifier.weight(1f)
                         )
@@ -167,7 +178,7 @@ fun EditWidgetSheet(
                     OutlinedTextField(
                         value = sliderUnit,
                         onValueChange = { sliderUnit = it },
-                        label = { Text("Unit (e.g. %)") },
+                        label = { Text("单位 (例如：%)") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -176,7 +187,7 @@ fun EditWidgetSheet(
                     OutlinedTextField(
                         value = maxFps,
                         onValueChange = { maxFps = it },
-                        label = { Text("Max FPS (refresh rate limit)") },
+                        label = { Text("最高刷新率 (FPS 限制)") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -188,10 +199,10 @@ fun EditWidgetSheet(
             Button(
                 onClick = {
                     val newConfig = when (widget.type) {
-                        WidgetType.TEXT   -> """{"unit":"$unit","jsonPath":"$jsonPath"}"""
-                        WidgetType.SWITCH -> """{"onPayload":"$onPayload","offPayload":"$offPayload","iconName":"$iconName"}"""
-                        WidgetType.SLIDER -> """{"min":${sliderMin.toDoubleOrNull()?:0.0},"max":${sliderMax.toDoubleOrNull()?:100.0},"step":${sliderStep.toDoubleOrNull()?:1.0},"unit":"$sliderUnit"}"""
-                        WidgetType.IMAGE  -> """{"maxFps":${maxFps.toIntOrNull()?:1}}"""
+                        WidgetType.TEXT   -> """{"unit":"$unit","jsonPath":"$jsonPath","fontSize":"$fontSize","cardColor":"$cardColor"}"""
+                        WidgetType.SWITCH -> """{"onPayload":"$onPayload","offPayload":"$offPayload","iconName":"$iconName","fontSize":"$fontSize","cardColor":"$cardColor"}"""
+                        WidgetType.SLIDER -> """{"min":${sliderMin.toDoubleOrNull()?:0.0},"max":${sliderMax.toDoubleOrNull()?:100.0},"step":${sliderStep.toDoubleOrNull()?:1.0},"unit":"$sliderUnit","fontSize":"$fontSize","cardColor":"$cardColor"}"""
+                        WidgetType.IMAGE  -> """{"maxFps":${maxFps.toIntOrNull()?:1},"fontSize":"$fontSize","cardColor":"$cardColor"}"""
                     }
                     onSave(
                         widget.copy(
@@ -209,12 +220,13 @@ fun EditWidgetSheet(
                     .height(52.dp),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Text("Save", style = MaterialTheme.typography.titleMedium)
+                Text("保存设置", style = MaterialTheme.typography.titleMedium)
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SizePicker(
     colSpan: Int, rowSpan: Int,
@@ -222,10 +234,10 @@ private fun SizePicker(
     onRowSpanChange: (Int) -> Unit
 ) {
     Column {
-        Text("Width", style = MaterialTheme.typography.labelSmall,
+        Text("占用列数 (宽度)", style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(1 to "Narrow", 2 to "Wide", 4 to "Full").forEach { (span, label) ->
+            listOf(1 to "窄卡 (1格)", 2 to "中卡 (2格)", 4 to "宽卡 (4格)").forEach { (span, label) ->
                 FilterChip(
                     selected = colSpan == span,
                     onClick = { onColSpanChange(span) },
@@ -234,13 +246,56 @@ private fun SizePicker(
             }
         }
         Spacer(Modifier.height(4.dp))
-        Text("Height", style = MaterialTheme.typography.labelSmall,
+        Text("占用行数 (高度)", style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(1 to "Short", 2 to "Tall").forEach { (span, label) ->
+            listOf(1 to "矮卡", 2 to "高卡").forEach { (span, label) ->
                 FilterChip(
                     selected = rowSpan == span,
                     onClick = { onRowSpanChange(span) },
+                    label = { Text(label) }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FontAndColorPicker(
+    fontSize: String,
+    onFontSizeChange: (String) -> Unit,
+    cardColor: String,
+    onCardColorChange: (String) -> Unit
+) {
+    Column {
+        Spacer(Modifier.height(4.dp))
+        Text("字号大小 (个体)", style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("SMALL" to "小", "MEDIUM" to "中", "LARGE" to "大").forEach { (sz, label) ->
+                FilterChip(
+                    selected = fontSize == sz,
+                    onClick = { onFontSizeChange(sz) },
+                    label = { Text(label) }
+                )
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        Text("卡片颜色 (个体)", style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(
+                "" to "默认",
+                "#E3F2FD" to "浅蓝",
+                "#E8F5E9" to "浅绿",
+                "#FFF3E0" to "浅橙",
+                "#FCE4EC" to "浅粉",
+                "#F3E5F5" to "浅紫"
+            ).forEach { (colorHex, label) ->
+                FilterChip(
+                    selected = cardColor == colorHex,
+                    onClick = { onCardColorChange(colorHex) },
                     label = { Text(label) }
                 )
             }

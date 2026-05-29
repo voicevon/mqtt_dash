@@ -26,5 +26,7 @@ data class DashboardEntity(
     val brokerId: Long,
     val name: String,
     /** Display order among sibling dashboards */
-    val position: Int = 0
+    val position: Int = 0,
+    /** Default size of widgets in this dashboard: "SMALL", "MEDIUM", "LARGE" */
+    val widgetSize: String = "MEDIUM"
 )

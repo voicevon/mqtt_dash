@@ -44,6 +44,7 @@ fun DashboardScreen(
     val widgets by viewModel.widgets.collectAsState()
     val isEditMode by viewModel.isEditMode.collectAsState()
     val currentDashboardId by viewModel.currentDashboard.collectAsState()
+    val currentDashboardSize = dashboards.find { it.id == currentDashboardId }?.widgetSize ?: "MEDIUM"
 
     var showAddSheet by remember { mutableStateOf(false) }
     var editingWidget by remember { mutableStateOf<WidgetEntity?>(null) }
@@ -133,7 +134,11 @@ fun DashboardScreen(
                             GridItemSpan(widget.colSpan.coerceIn(1, 4))
                         }
                     ) { widget ->
-                        val itemHeight = if (widget.rowSpan >= 2) 200.dp else 110.dp
+                        val itemHeight = when (currentDashboardSize) {
+                            "SMALL" -> if (widget.rowSpan >= 2) 150.dp else 85.dp
+                            "LARGE" -> if (widget.rowSpan >= 2) 250.dp else 140.dp
+                            else -> if (widget.rowSpan >= 2) 200.dp else 110.dp
+                        }
                         ReorderableItem(
                             state = reorderableState,
                             key = widget.id,
@@ -188,8 +193,8 @@ fun DashboardScreen(
     if (showNewDashboardDialog) {
         NewDashboardDialog(
             onDismiss = { showNewDashboardDialog = false },
-            onCreate = { name ->
-                viewModel.addDashboard(name)
+            onCreate = { name, size ->
+                viewModel.addDashboard(name, size)
                 showNewDashboardDialog = false
             }
         )
@@ -198,31 +203,45 @@ fun DashboardScreen(
     // Dialog: rename dashboard
     dashboardToRename?.let { dashboard ->
         var name by remember { mutableStateOf(dashboard.name) }
+        var widgetSize by remember { mutableStateOf(dashboard.widgetSize) }
         AlertDialog(
             onDismissRequest = { dashboardToRename = null },
-            title = { Text("Rename Dashboard") },
+            title = { Text("控制面板设置") },
             text = {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Dashboard name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("面板名称") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text("全局 Widget 大小", style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("SMALL" to "小", "MEDIUM" to "中", "LARGE" to "大").forEach { (sz, label) ->
+                            FilterChip(
+                                selected = widgetSize == sz,
+                                onClick = { widgetSize = sz },
+                                label = { Text(label) }
+                            )
+                        }
+                    }
+                }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
                         if (name.isNotBlank()) {
-                            viewModel.renameDashboard(dashboard, name)
+                            viewModel.renameDashboard(dashboard, name, widgetSize)
                             dashboardToRename = null
                         }
                     },
                     enabled = name.isNotBlank()
-                ) { Text("Save") }
+                ) { Text("保存") }
             },
             dismissButton = {
-                TextButton(onClick = { dashboardToRename = null }) { Text("Cancel") }
+                TextButton(onClick = { dashboardToRename = null }) { Text("取消") }
             }
         )
     }
@@ -231,8 +250,8 @@ fun DashboardScreen(
     dashboardToDelete?.let { dashboard ->
         AlertDialog(
             onDismissRequest = { dashboardToDelete = null },
-            title = { Text("Delete Dashboard") },
-            text = { Text("Are you sure you want to delete dashboard '${dashboard.name}'? This will delete all widgets inside it.") },
+            title = { Text("删除控制面板") },
+            text = { Text("您确定要删除控制面板 '${dashboard.name}' 吗？这会同时删除它内部所有的控件。") },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -240,10 +259,10 @@ fun DashboardScreen(
                         dashboardToDelete = null
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) { Text("Delete") }
+                ) { Text("删除") }
             },
             dismissButton = {
-                TextButton(onClick = { dashboardToDelete = null }) { Text("Cancel") }
+                TextButton(onClick = { dashboardToDelete = null }) { Text("取消") }
             }
         )
     }
@@ -291,7 +310,7 @@ private fun DashboardAppBar(
         },
         actions = {
             TextButton(onClick = onEditToggle) {
-                Text(if (isEditMode) "Done" else "Edit")
+                Text(if (isEditMode) "完成" else "编辑")
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -318,41 +337,56 @@ private fun EmptyDashboardHint(modifier: Modifier = Modifier) {
         )
         Spacer(Modifier.height(16.dp))
         Text(
-            "No widgets yet",
+            "暂无控件",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            "Tap + to add your first widget",
+            "点击右下角 + 按钮添加您的第一个控件",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun NewDashboardDialog(onDismiss: () -> Unit, onCreate: (String) -> Unit) {
+private fun NewDashboardDialog(onDismiss: () -> Unit, onCreate: (String, String) -> Unit) {
     var name by remember { mutableStateOf("") }
+    var widgetSize by remember { mutableStateOf("MEDIUM") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("New Dashboard") },
+        title = { Text("新建控制面板") },
         text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Dashboard name") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("面板名称") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text("全局 Widget 大小", style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("SMALL" to "小", "MEDIUM" to "中", "LARGE" to "大").forEach { (sz, label) ->
+                        FilterChip(
+                            selected = widgetSize == sz,
+                            onClick = { widgetSize = sz },
+                            label = { Text(label) }
+                        )
+                    }
+                }
+            }
         },
         confirmButton = {
             TextButton(
-                onClick = { if (name.isNotBlank()) onCreate(name) },
+                onClick = { if (name.isNotBlank()) onCreate(name, widgetSize) },
                 enabled = name.isNotBlank()
-            ) { Text("Create") }
+            ) { Text("创建") }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text("取消") }
         }
     )
 }

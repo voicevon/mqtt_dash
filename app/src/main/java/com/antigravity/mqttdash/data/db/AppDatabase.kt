@@ -11,7 +11,7 @@ import com.antigravity.mqttdash.data.db.entity.WidgetEntity
 
 @Database(
     entities = [BrokerEntity::class, DashboardEntity::class, WidgetEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

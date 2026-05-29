@@ -31,7 +31,7 @@ fun DashboardDrawer(
         Spacer(Modifier.height(24.dp))
 
         Text(
-            "Dashboards",
+            "控制面板列表",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(horizontal = 20.dp),
             color = MaterialTheme.colorScheme.primary
@@ -84,7 +84,7 @@ fun DashboardDrawer(
             }
             item {
                 NavigationDrawerItem(
-                    label = { Text("Add Dashboard") },
+                    label = { Text("新建控制面板") },
                     selected = false,
                     onClick = onAddDashboard,
                     icon = { Icon(Icons.Filled.Add, contentDescription = null) },
@@ -96,7 +96,7 @@ fun DashboardDrawer(
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
         NavigationDrawerItem(
-            label = { Text("Disconnect", color = MaterialTheme.colorScheme.error) },
+            label = { Text("断开连接", color = MaterialTheme.colorScheme.error) },
             selected = false,
             onClick = onDisconnect,
             icon = {

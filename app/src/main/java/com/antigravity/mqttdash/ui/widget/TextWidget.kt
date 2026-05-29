@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jayway.jsonpath.JsonPath
 import kotlinx.coroutines.flow.SharedFlow
+import androidx.compose.ui.graphics.Color
 
 /**
  * Text / Value widget.
@@ -22,9 +23,27 @@ fun TextWidget(
     unit: String,
     jsonPath: String?,
     topicFlow: SharedFlow<String>?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    fontSize: String = "MEDIUM",
+    cardColorHex: String = ""
 ) {
     var rawValue by remember { mutableStateOf("—") }
+
+    val titleSize = when (fontSize) {
+        "SMALL" -> 10.sp
+        "LARGE" -> 14.sp
+        else -> 12.sp
+    }
+    val valueSize = when (fontSize) {
+        "SMALL" -> 20.sp
+        "LARGE" -> 36.sp
+        else -> 28.sp
+    }
+    val containerColor = if (cardColorHex.isNotBlank()) {
+        try { Color(android.graphics.Color.parseColor(cardColorHex)) } catch (e: Exception) { MaterialTheme.colorScheme.surface }
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
 
     LaunchedEffect(topicFlow) {
         topicFlow?.collect { payload ->
@@ -40,7 +59,10 @@ fun TextWidget(
         }
     }
 
-    WidgetCard(modifier = modifier) {
+    WidgetCard(
+        containerColor = containerColor,
+        modifier = modifier
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -49,7 +71,7 @@ fun TextWidget(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = titleSize),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -60,7 +82,7 @@ fun TextWidget(
             ) {
                 Text(
                     text = rawValue,
-                    style = MaterialTheme.typography.headlineMedium.copy(fontSize = 28.sp),
+                    style = MaterialTheme.typography.headlineMedium.copy(fontSize = valueSize),
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center,
                     maxLines = 1,

@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.CachePolicy
 import kotlinx.coroutines.flow.SharedFlow
+import androidx.compose.ui.unit.sp
 
 /**
  * Image widget.
@@ -35,12 +36,25 @@ fun ImageWidget(
     maxFps: Int,
     topicFlow: SharedFlow<String>?,
     modifier: Modifier = Modifier,
-    onClickFullScreen: (Any) -> Unit = {}
+    onClickFullScreen: (Any) -> Unit = {},
+    fontSize: String = "MEDIUM",
+    cardColorHex: String = ""
 ) {
     var imageSource by remember { mutableStateOf<Any?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
     val minIntervalMs = if (maxFps > 0) (1000L / maxFps) else 1000L
+
+    val titleSize = when (fontSize) {
+        "SMALL" -> 10.sp
+        "LARGE" -> 14.sp
+        else -> 12.sp
+    }
+    val containerColor = if (cardColorHex.isNotBlank()) {
+        try { Color(android.graphics.Color.parseColor(cardColorHex)) } catch (e: Exception) { MaterialTheme.colorScheme.surface }
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
     var lastUpdateMs by remember { mutableLongStateOf(0L) }
 
     LaunchedEffect(topicFlow) {
@@ -66,7 +80,10 @@ fun ImageWidget(
         }
     }
 
-    WidgetCard(modifier = modifier) {
+    WidgetCard(
+        containerColor = containerColor,
+        modifier = modifier
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -93,7 +110,7 @@ fun ImageWidget(
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = titleSize),
                     color = Color.White
                 )
             }

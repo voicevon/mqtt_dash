@@ -21,10 +21,10 @@ data class WidgetTypeInfo(
 )
 
 private val widgetTypes = listOf(
-    WidgetTypeInfo(WidgetType.TEXT, "Text / Value", "Display sensor readings", Icons.Filled.Numbers),
-    WidgetTypeInfo(WidgetType.SWITCH, "Switch", "On/off control", Icons.Filled.ToggleOn),
-    WidgetTypeInfo(WidgetType.SLIDER, "Slider", "Range control (0-100)", Icons.Filled.LinearScale),
-    WidgetTypeInfo(WidgetType.IMAGE, "Image", "Camera or image stream", Icons.Filled.Image),
+    WidgetTypeInfo(WidgetType.TEXT, "文本数值", "展示传感器读数与文本", Icons.Filled.Numbers),
+    WidgetTypeInfo(WidgetType.SWITCH, "开关", "双态控制开关", Icons.Filled.ToggleOn),
+    WidgetTypeInfo(WidgetType.SLIDER, "滑动条", "连续范围数值控制 (0-100)", Icons.Filled.LinearScale),
+    WidgetTypeInfo(WidgetType.IMAGE, "图像", "摄像头视频或图像流", Icons.Filled.Image),
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,7 +45,7 @@ fun AddWidgetSheet(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                "Add Widget",
+                "添加控件",
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
@@ -59,7 +59,7 @@ fun AddWidgetSheet(
                             dashboardId = dashboardId,
                             type = info.type,
                             title = info.label,
-                            colSpan = if (info.type == WidgetType.SLIDER || info.type == WidgetType.IMAGE) 2 else 2,
+                            colSpan = 2,
                             rowSpan = if (info.type == WidgetType.IMAGE) 2 else 1,
                             configJson = defaultConfigFor(info.type)
                         )
@@ -107,8 +107,8 @@ private fun WidgetTypeCard(info: WidgetTypeInfo, onClick: () -> Unit) {
 }
 
 private fun defaultConfigFor(type: WidgetType): String = when (type) {
-    WidgetType.TEXT   -> """{"unit":"","jsonPath":"","color":""}"""
-    WidgetType.SWITCH -> """{"onPayload":"1","offPayload":"0","iconName":"lightbulb"}"""
-    WidgetType.SLIDER -> """{"min":0.0,"max":100.0,"step":1.0,"unit":""}"""
-    WidgetType.IMAGE  -> """{"maxFps":1}"""
+    WidgetType.TEXT   -> """{"unit":"","jsonPath":"","fontSize":"MEDIUM","cardColor":""}"""
+    WidgetType.SWITCH -> """{"onPayload":"1","offPayload":"0","iconName":"lightbulb","fontSize":"MEDIUM","cardColor":""}"""
+    WidgetType.SLIDER -> """{"min":0.0,"max":100.0,"step":1.0,"unit":"","fontSize":"MEDIUM","cardColor":""}"""
+    WidgetType.IMAGE  -> """{"maxFps":1,"fontSize":"MEDIUM","cardColor":""}"""
 }

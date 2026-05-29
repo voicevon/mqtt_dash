@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.flow.SharedFlow
 
 /** Mapping from icon name string to Material icon vector */
@@ -36,6 +38,7 @@ val switchIconMap: Map<String, ImageVector> = mapOf(
  * Subscribes to [topicFlow] to track on/off state; publishes [onPayload]/[offPayload]
  * on toggle with optimistic UI update.
  */
+
 @Composable
 fun SwitchWidget(
     title: String,
@@ -44,9 +47,17 @@ fun SwitchWidget(
     offPayload: String,
     topicFlow: SharedFlow<String>?,
     onPublish: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    fontSize: String = "MEDIUM",
+    cardColorHex: String = ""
 ) {
     var isOn by remember { mutableStateOf(false) }
+
+    val titleSize = when (fontSize) {
+        "SMALL" -> 12.sp
+        "LARGE" -> 18.sp
+        else -> 14.sp
+    }
 
     // Subscribe to state topic
     LaunchedEffect(topicFlow) {
@@ -55,11 +66,18 @@ fun SwitchWidget(
         }
     }
 
+    val defaultBaseColor = if (cardColorHex.isNotBlank()) {
+        try { Color(android.graphics.Color.parseColor(cardColorHex)) } catch (e: Exception) { MaterialTheme.colorScheme.surfaceVariant }
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+    val activeColor = if (cardColorHex.isNotBlank()) {
+        try { Color(android.graphics.Color.parseColor(cardColorHex)).copy(alpha = 0.7f) } catch (e: Exception) { MaterialTheme.colorScheme.primaryContainer }
+    } else {
+        MaterialTheme.colorScheme.primaryContainer
+    }
     val bgColor by animateColorAsState(
-        targetValue = if (isOn)
-            MaterialTheme.colorScheme.primaryContainer
-        else
-            MaterialTheme.colorScheme.surfaceVariant,
+        targetValue = if (isOn) activeColor else defaultBaseColor,
         animationSpec = tween(300),
         label = "switchBg"
     )
@@ -86,7 +104,7 @@ fun SwitchWidget(
             Spacer(Modifier.width(8.dp))
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = titleSize),
                 modifier = Modifier.weight(1f),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,

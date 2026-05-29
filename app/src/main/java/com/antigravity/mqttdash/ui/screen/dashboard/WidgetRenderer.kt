@@ -38,6 +38,8 @@ fun WidgetRenderer(
 ) {
     val config = runCatching { JSONObject(widget.configJson) }.getOrDefault(JSONObject())
     val subFlow = widget.subTopic?.let { topicFlow(it, widget.qos) }
+    val fontSize = config.optString("fontSize", "MEDIUM")
+    val cardColorHex = config.optString("cardColor", "")
 
     Box(
         modifier = modifier
@@ -55,18 +57,22 @@ fun WidgetRenderer(
                 unit = config.optString("unit", ""),
                 jsonPath = config.optString("jsonPath", "").ifBlank { null },
                 topicFlow = subFlow,
+                fontSize = fontSize,
+                cardColorHex = cardColorHex,
                 modifier = Modifier.fillMaxSize()
             )
 
             WidgetType.SWITCH -> SwitchWidget(
                 title = widget.title,
-                iconName = config.optString("iconName", "default"),
+                iconName = config.optString("iconName", "lightbulb"),
                 onPayload = config.optString("onPayload", "1"),
                 offPayload = config.optString("offPayload", "0"),
                 topicFlow = subFlow,
                 onPublish = { payload ->
                     widget.pubTopic?.let { onPublish(it, payload) }
                 },
+                fontSize = fontSize,
+                cardColorHex = cardColorHex,
                 modifier = Modifier.fillMaxSize()
             )
 
@@ -80,6 +86,8 @@ fun WidgetRenderer(
                 onPublish = { payload ->
                     widget.pubTopic?.let { onPublish(it, payload) }
                 },
+                fontSize = fontSize,
+                cardColorHex = cardColorHex,
                 modifier = Modifier.fillMaxSize()
             )
 
@@ -87,6 +95,8 @@ fun WidgetRenderer(
                 title = widget.title,
                 maxFps = config.optInt("maxFps", 1),
                 topicFlow = subFlow,
+                fontSize = fontSize,
+                cardColorHex = cardColorHex,
                 modifier = Modifier.fillMaxSize()
             )
         }
