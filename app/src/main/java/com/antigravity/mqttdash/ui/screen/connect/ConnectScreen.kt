@@ -6,10 +6,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalDensity
+import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Lock
@@ -46,6 +50,18 @@ fun ConnectScreen(
     var brokerToRename by remember { mutableStateOf<BrokerEntity?>(null) }
     var brokerToDelete by remember { mutableStateOf<BrokerEntity?>(null) }
     val focusManager = LocalFocusManager.current
+    val lazyListState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val isKeyboardVisible = WindowInsets.ime.getBottom(density) > 0
+
+    val focusScrollModifier = Modifier.onFocusChanged { focusState ->
+        if (focusState.isFocused) {
+            coroutineScope.launch {
+                lazyListState.animateScrollToItem(1)
+            }
+        }
+    }
 
     // Error snackbar
     val snackbarHostState = remember { SnackbarHostState() }
@@ -71,8 +87,10 @@ fun ConnectScreen(
                     )
                 )
                 .padding(padding)
+                .imePadding()
         ) {
             LazyColumn(
+                state = lazyListState,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 24.dp),
@@ -81,35 +99,42 @@ fun ConnectScreen(
             ) {
                 // ── Logo & Headline ─────────────────────────────────────────
                 item {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
+                    AnimatedVisibility(
+                        visible = !isKeyboardVisible,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut()
                     ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .size(80.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer)
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Icon(
-                                imageVector = Icons.Filled.SignalWifi4Bar,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.size(40.dp)
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primaryContainer)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.SignalWifi4Bar,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(40.dp)
+                                )
+                            }
+                            Spacer(Modifier.height(16.dp))
+                            Text(
+                                text = "MQTT Dash 仪表盘",
+                                style = MaterialTheme.typography.headlineLarge,
+                                color = MaterialTheme.colorScheme.onBackground
                             )
+                            Text(
+                                text = "连接到您的 MQTT 物联网服务器",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(16.dp))
                         }
-                        Spacer(Modifier.height(16.dp))
-                        Text(
-                            text = "MQTT Dash 仪表盘",
-                            style = MaterialTheme.typography.headlineLarge,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        Text(
-                            text = "连接到您的 MQTT 物联网服务器",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
                 }
 
@@ -136,7 +161,7 @@ fun ConnectScreen(
                                 label = { Text("连接别名 / 名称 (可选)") },
                                 placeholder = { Text("例如: 我的智能家居服务器") },
                                 singleLine = true,
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().then(focusScrollModifier),
                                 keyboardOptions = KeyboardOptions(
                                     keyboardType = KeyboardType.Text,
                                     imeAction = ImeAction.Next
@@ -157,7 +182,7 @@ fun ConnectScreen(
                                     label = { Text("服务器地址 (Host)") },
                                     placeholder = { Text("例如: broker.emqx.io") },
                                     singleLine = true,
-                                    modifier = Modifier.weight(1f),
+                                    modifier = Modifier.weight(1f).then(focusScrollModifier),
                                     keyboardOptions = KeyboardOptions(
                                         keyboardType = KeyboardType.Uri,
                                         imeAction = ImeAction.Next
@@ -171,7 +196,7 @@ fun ConnectScreen(
                                     onValueChange = viewModel::onPortChange,
                                     label = { Text("端口") },
                                     singleLine = true,
-                                    modifier = Modifier.width(90.dp),
+                                    modifier = Modifier.width(90.dp).then(focusScrollModifier),
                                     keyboardOptions = KeyboardOptions(
                                         keyboardType = KeyboardType.Number,
                                         imeAction = ImeAction.Done
@@ -211,7 +236,7 @@ fun ConnectScreen(
                                         onValueChange = viewModel::onUsernameChange,
                                         label = { Text("用户名 (可选)") },
                                         singleLine = true,
-                                        modifier = Modifier.fillMaxWidth(),
+                                        modifier = Modifier.fillMaxWidth().then(focusScrollModifier),
                                         leadingIcon = { Icon(Icons.Filled.Lock, null, modifier = Modifier.size(18.dp)) }
                                     )
                                     OutlinedTextField(
@@ -220,14 +245,14 @@ fun ConnectScreen(
                                         label = { Text("密码 (可选)") },
                                         singleLine = true,
                                         visualTransformation = PasswordVisualTransformation(),
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier.fillMaxWidth().then(focusScrollModifier)
                                     )
                                     OutlinedTextField(
                                         value = uiState.clientId,
                                         onValueChange = viewModel::onClientIdChange,
                                         label = { Text("客户端 ID (Client ID)") },
                                         singleLine = true,
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier.fillMaxWidth().then(focusScrollModifier)
                                     )
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
