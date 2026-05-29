@@ -1,0 +1,6 @@
+-keep class com.hivemq.** { *; }
+-dontwarn com.hivemq.**
+-keep class io.netty.** { *; }
+-dontwarn io.netty.**
+-dontwarn com.jayway.jsonpath.**
+-keep class com.jayway.jsonpath.** { *; }
